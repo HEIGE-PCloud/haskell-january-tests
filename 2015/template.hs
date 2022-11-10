@@ -76,8 +76,13 @@ assignArray :: Value -> Value -> Value -> Value
 -- The arguments are the array, index and (new) value respectively
 -- Pre: The three values have the appropriate value types (array (A), 
 --      integer (I) and integer (I)) respectively.
-assignArray 
-  = undefined
+assignArray (A []) (I i) (I v)
+  = (A [])
+assignArray (A (a@(ia, va) : as)) (I i) (I v)
+  | ia == i   = A ((i, v) : as)
+  | otherwise = A (a : as')
+    where
+      (A as') = assignArray (A as) (I i) (I v)
 
 updateVar :: (Id, Value) -> State -> State
 updateVar 
