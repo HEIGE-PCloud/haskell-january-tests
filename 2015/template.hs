@@ -90,14 +90,30 @@ updateVar (i, v) []
 updateVar p@(i, v) (b@(ib, (sb, vb)) : bs)
   | i == ib   = (i, (sb, v)) : bs
   | otherwise = b : updateVar p bs
+-- 32:44.38
 
 ---------------------------------------------------------------------
 -- Part II
 
+-- convert Bool to Int
+boolToInt :: Bool -> Int
+boolToInt True  = 1
+boolToInt False = 0
+
 applyOp :: Op -> Value -> Value -> Value
 -- Pre: The values have the appropriate types (I or A) for each primitive
-applyOp 
-  = undefined
+applyOp Add (I x) (I y)
+  = I (x + y)
+applyOp Mul (I x) (I y)
+  = I (x * y)
+applyOp Less (I x) (I y)
+  = I (boolToInt (x < y))
+applyOp Equal (I x) (I y)
+  = I (boolToInt (x == y))
+applyOp Index (A xs) (I i)
+  = case lookup i xs of
+    Just x  -> I x
+    Nothing -> I 0
 
 bindArgs :: [Id] -> [Value] -> State
 -- Pre: the lists have the same length
