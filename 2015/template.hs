@@ -118,7 +118,7 @@ applyOp Index (A xs) (I i)
 bindArgs :: [Id] -> [Value] -> State
 -- Pre: the lists have the same length
 bindArgs
-  = undefined
+  = zipWith (\i v -> (i, (Local, v)))
 
 evalArgs :: [Exp] -> [FunDef] -> State -> [Value]
 evalArgs
