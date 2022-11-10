@@ -100,6 +100,11 @@ boolToInt :: Bool -> Int
 boolToInt True  = 1
 boolToInt False = 0
 
+-- convert Int to bool
+intToBool :: Int -> Bool
+intToBool 0 = False
+intToBool 1 = True
+
 applyOp :: Op -> Value -> Value -> Value
 -- Pre: The values have the appropriate types (I or A) for each primitive
 applyOp Add (I x) (I y)
@@ -121,14 +126,36 @@ bindArgs
   = zipWith (\i v -> (i, (Local, v)))
 
 evalArgs :: [Exp] -> [FunDef] -> State -> [Value]
-evalArgs
-  = undefined
+evalArgs es fds s
+  = map (eval' fds s) es
+  where
+    eval' :: [FunDef] -> State -> Exp -> Value
+    eval' fds s e = eval e fds s
 
 eval :: Exp -> [FunDef] -> State -> Value
 -- Pre: All expressions are well formed
 -- Pre: All variables referenced have bindings in the given state
-eval 
-  = undefined
+eval (Const v) _ _
+  = v
+eval (Var i) _ s
+  = getValue i s
+eval (OpApp o e1 e2) fds s
+  = applyOp o e1' e2'
+    where
+      e1' = eval e1 fds s
+      e2' = eval e2 fds s
+eval (Cond ec e1 e2) fds s
+  | ec' == 1  = eval e1 fds s
+  | otherwise = eval e2 fds s
+    where
+      (I ec') = eval ec fds s
+eval (FunApp i es) fds s
+  = eval e fds s'
+    where
+      (as, e) = lookUp i fds
+      avs = evalArgs es fds s
+      vs = bindArgs as avs
+      s' = vs ++ s
 
 ---------------------------------------------------------------------
 -- Part III
