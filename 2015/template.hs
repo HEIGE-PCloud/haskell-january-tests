@@ -61,8 +61,8 @@ type State = [Binding]
 
 getValue :: Id -> State -> Value
 -- Pre: The identifier has a binding in the state
-getValue 
-  = undefined
+getValue id state
+  = snd (lookUp id state)
 
 getLocals :: State -> State
 getLocals
