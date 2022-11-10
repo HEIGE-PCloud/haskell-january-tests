@@ -66,11 +66,11 @@ getValue id state
 
 getLocals :: State -> State
 getLocals
-  = undefined
+  = filter (\(_, (s, _)) -> s == Local)
 
 getGlobals :: State -> State
-getGlobals
-  = undefined
+getGlobals 
+  = filter (\(_, (s, _)) -> s == Global)
 
 assignArray :: Value -> Value -> Value -> Value
 -- The arguments are the array, index and (new) value respectively
