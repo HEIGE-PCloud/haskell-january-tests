@@ -157,6 +157,7 @@ eval (FunApp i es) fds s
       vs = bindArgs as avs
       s' = vs ++ s
 
+-- 1:06:22.75
 ---------------------------------------------------------------------
 -- Part III
 
@@ -164,13 +165,59 @@ executeStatement :: Statement -> [FunDef] -> [ProcDef] -> State -> State
 -- Pre: All statements are well formed 
 -- Pre: For array element assignment (AssignA) the array variable is in scope,
 --      i.e. it has a binding in the given state
-executeStatement 
-  = undefined
+executeStatement (Assign i e) fds _ s
+  = updateVar (i, e') s
+  where
+    e' = eval e fds s
+executeStatement (AssignA i ei ev) fds _ s
+  = updateVar (i, a') s
+    where
+      a  = getValue i s
+      a' = assignArray a k v
+      k  = eval ei fds s
+      v  = eval ev fds s
+executeStatement (If p bt bf) fds pds s
+  | p' == 1   = executeBlock bt fds pds s
+  | otherwise = executeBlock bf fds pds s
+    where
+      (I p') = eval p fds s
+executeStatement (While p b) fds pds s
+  | p' == 1   = executeStatement (While p b) fds pds es
+  | otherwise = s
+    where
+      (I p') = eval p fds s
+      es = executeBlock b fds pds s
+executeStatement (Call ix ip es) fds pds s
+  | null ix = getLocals s ++ getGlobals rs
+  | otherwise = ls' ++ getGlobals rs
+  where
+    -- find the procedure to call
+    (as, block) = lookUp ip pds
+    -- eval all argument expressions
+    avs = evalArgs es fds s
+    -- create local variables
+    vs = bindArgs as avs
+    -- create states to pass in the procedure
+    s' = vs ++ getGlobals s
+    -- execute the procedure
+    rs = executeBlock block fds pds s'
+    -- find the return variable
+    (_, (_, rv)) = head $ filter ((== "$res") . fst) rs
+    ls' = getLocals $ updateVar (ix, rv) s
+
+executeStatement (Return e) fds pds s
+  = s'
+    where
+      e' = eval e fds s
+      s' = updateVar ("$res", e') s
 
 executeBlock :: Block -> [FunDef] -> [ProcDef] -> State -> State
 -- Pre: All code blocks and associated statements are well formed
-executeBlock 
-  = undefined
+executeBlock bs fds pds s
+  = foldl (exe fds pds) s bs
+  where
+    exe :: [FunDef] -> [ProcDef] -> State -> Statement -> State
+    exe fds pds s st = executeStatement st fds pds s 
 
 ---------------------------------------------------------------------
 -- Part IV
