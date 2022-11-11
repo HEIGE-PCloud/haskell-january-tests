@@ -229,8 +229,30 @@ translate (name, (as, e)) newName nameMap
     (b, e', ids') = translate' e nameMap ['$' : show n | n <- [1..]] 
 
 translate' :: Exp -> [(Id, Id)] -> [Id] -> (Block, Exp, [Id])
-translate' 
-  = undefined
+translate' c@(Const _) nameMap ids
+  = ([], c, ids)
+translate' v@(Var _) nameMap ids
+  = ([], v, ids)
+translate' (OpApp op e1 e2) nameMap ids
+  = (b1 ++ b2, (OpApp op re1 re2), ids'')
+    where
+      (b1, re1, ids') = translate' e1 nameMap ids
+      (b2, re2, ids'') = translate' e2 nameMap ids'
+translate' (Cond ep e1 e2) nameMap ids
+  = ([If ep b1' b2'], (Var id), ids)
+  where
+    (b1, re1, ids') = translate' e1 nameMap ids
+    (b2, re2, (id : ids'')) = translate' e2 nameMap ids'
+
+    b1' = b1 ++ [Assign id re1]
+    b2' = b2 ++ [Assign id re2]
+translate' e@(FunApp fid es) nameMap i@(id : ids)
+  = case fid' of
+    Just f  -> ([Call id f es], (Var id), ids)
+    Nothing -> ([], e, i)
+  where
+    fid' = lookup fid nameMap
+
 
 ---------------------------------------------------------------------
 -- PREDEFINED FUNCTIONS
