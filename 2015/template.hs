@@ -239,7 +239,7 @@ translate' (OpApp op e1 e2) nameMap ids
       (b1, re1, ids') = translate' e1 nameMap ids
       (b2, re2, ids'') = translate' e2 nameMap ids'
 translate' (Cond ep e1 e2) nameMap ids
-  = ([If ep b1' b2'], (Var id), ids)
+  = ([If ep b1' b2'], (Var id), ids'')
   where
     (b1, re1, ids') = translate' e1 nameMap ids
     (b2, re2, (id : ids'')) = translate' e2 nameMap ids'
