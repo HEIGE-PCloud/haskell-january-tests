@@ -77,7 +77,7 @@ assignArray :: Value -> Value -> Value -> Value
 -- Pre: The three values have the appropriate value types (array (A), 
 --      integer (I) and integer (I)) respectively.
 assignArray (A []) (I i) (I v)
-  = (A [])
+  = (A [(i, v)])
 assignArray (A (a@(ia, va) : as)) (I i) (I v)
   | ia == i   = A ((i, v) : as)
   | otherwise = A (a : as')
