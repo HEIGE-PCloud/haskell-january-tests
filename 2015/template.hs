@@ -76,13 +76,8 @@ assignArray :: Value -> Value -> Value -> Value
 -- The arguments are the array, index and (new) value respectively
 -- Pre: The three values have the appropriate value types (array (A), 
 --      integer (I) and integer (I)) respectively.
-assignArray (A []) (I i) (I v)
-  = (A [(i, v)])
-assignArray (A (a@(ia, va) : as)) (I i) (I v)
-  | ia == i   = A ((i, v) : as)
-  | otherwise = A (a : as')
-    where
-      (A as') = assignArray (A as) (I i) (I v)
+assignArray (A as) (I i) (I v)
+  = A ((i, v) : (filter (\(x, y) -> x /= i) as))
 
 updateVar :: (Id, Value) -> State -> State
 updateVar (i, v) []
@@ -180,15 +175,15 @@ executeStatement (If p bt bf) fds pds s
   | p' == 1   = executeBlock bt fds pds s
   | otherwise = executeBlock bf fds pds s
     where
-      (I p') = eval p fds s
+      (I p')  = eval p fds s
 executeStatement (While p b) fds pds s
   | p' == 1   = executeStatement (While p b) fds pds es
   | otherwise = s
     where
-      (I p') = eval p fds s
+      (I p')  = eval p fds s
       es = executeBlock b fds pds s
 executeStatement (Call ix ip es) fds pds s
-  | null ix = getLocals s ++ getGlobals rs
+  | null ix   = getLocals s ++ getGlobals rs
   | otherwise = ls' ++ getGlobals rs
   where
     -- find the procedure to call
@@ -196,11 +191,11 @@ executeStatement (Call ix ip es) fds pds s
     -- eval all argument expressions
     avs = evalArgs es fds s
     -- create local variables
-    vs = bindArgs as avs
+    vs  = bindArgs as avs
     -- create states to pass in the procedure
-    s' = vs ++ getGlobals s
+    s'  = vs ++ getGlobals s
     -- execute the procedure
-    rs = executeBlock block fds pds s'
+    rs  = executeBlock block fds pds s'
     -- find the return variable
     (_, (_, rv)) = head $ filter ((== "$res") . fst) rs
     ls' = getLocals $ updateVar (ix, rv) s
