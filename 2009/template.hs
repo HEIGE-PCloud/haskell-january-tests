@@ -75,9 +75,20 @@ simplify (Or (Prim True) (Prim True))
 simplify exp
   = exp
 
+-- data BExp = Prim Bool | IdRef Index | Not BExp | And BExp BExp | Or BExp BExp
+
 restrict :: BExp -> Index -> Bool -> BExp
-restrict 
-  = undefined
+restrict (Prim x) _ _
+  = Prim x
+restrict (IdRef x) y z
+  | x == y = Prim z
+  | otherwise = IdRef x
+restrict (Not exp) y z
+  = simplify (Not (restrict exp y z))
+restrict (And exp1 exp2) y z
+  = simplify (And (restrict exp1 y z) (restrict exp2 y z))
+restrict (Or exp1 exp2) y z
+  = simplify (Or (restrict exp1 y z) (restrict exp2 y z))
 
 ------------------------------------------------------
 -- PART III
