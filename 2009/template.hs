@@ -1,4 +1,5 @@
 import Data.List
+import Data.Maybe
 
 type Index = Int
 
@@ -9,7 +10,7 @@ type Env = [(Index, Bool)]
 
 type NodeId = Int
 
-type BDDNode =  (NodeId, (Index, NodeId, NodeId))
+type BDDNode = (NodeId, (Index, NodeId, NodeId))
 
 type BDD = (NodeId, [BDDNode])
 
@@ -51,8 +52,28 @@ sat bdd = sat' bdd []
 -- PART II
 
 simplify :: BExp -> BExp
-simplify 
-  = undefined
+simplify (Not (Prim False))
+  = Prim True
+simplify (Not (Prim True))
+  = Prim False
+simplify (And (Prim False) (Prim False))
+  = Prim False
+simplify (And (Prim False) (Prim True))
+  = Prim False
+simplify (And (Prim True) (Prim False))
+  = Prim False
+simplify (And (Prim True) (Prim True))
+  = Prim True
+simplify (Or (Prim False) (Prim False))
+  = Prim False
+simplify (Or (Prim False) (Prim True))
+  = Prim True
+simplify (Or (Prim True) (Prim False))
+  = Prim True
+simplify (Or (Prim True) (Prim True))
+  = Prim True
+simplify exp
+  = exp
 
 restrict :: BExp -> Index -> Bool -> BExp
 restrict 
