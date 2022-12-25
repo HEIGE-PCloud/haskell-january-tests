@@ -18,16 +18,34 @@ type BDD = (NodeId, [BDDNode])
 
 -- Pre: The item is in the given table
 lookUp :: Eq a => a -> [(a, b)] -> b
-lookUp 
-  = undefined
+lookUp x ys
+  = fromJust (lookup x ys)
 
 checkSat :: BDD -> Env -> Bool
-checkSat 
-  = undefined
+checkSat (0, _) env
+  = False
+checkSat (1, _) env
+  = True
+checkSat (nodeId, nodes) env
+  | boolValue = checkSat (trueNodeId, nodes) env
+  | otherwise = checkSat (falseNodeId, nodes) env
+    where
+      (index, falseNodeId, trueNodeId) = lookUp nodeId nodes
+      boolValue = lookUp index env
 
 sat :: BDD -> [[(Index, Bool)]]
-sat 
-  = undefined
+sat bdd = sat' bdd []
+  where
+    sat' :: BDD -> Env -> [[(Index, Bool)]]
+    sat' (0, _) _ 
+      = []
+    sat' (1, _) env 
+      = [env] 
+    sat' (nodeId, nodes) env
+      =  sat' (falseNodeId, nodes) ((index, False) : env)
+      ++ sat' (trueNodeId , nodes) ((index, True)  : env)
+        where
+          (index, falseNodeId, trueNodeId) = lookUp nodeId nodes
 
 ------------------------------------------------------
 -- PART II
