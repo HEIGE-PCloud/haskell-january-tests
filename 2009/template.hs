@@ -75,8 +75,6 @@ simplify (Or (Prim True) (Prim True))
 simplify exp
   = exp
 
--- data BExp = Prim Bool | IdRef Index | Not BExp | And BExp BExp | Or BExp BExp
-
 restrict :: BExp -> Index -> Bool -> BExp
 restrict (Prim x) _ _
   = Prim x
@@ -100,30 +98,70 @@ restrict (Or exp1 exp2) y z
 -- type BDDNode = (NodeId, (Index, NodeId, NodeId))
 -- type BDD = (NodeId, [BDDNode])
 buildBDD :: BExp -> [Index] -> BDD
-buildBDD e xs
-  = buildBDD' e 2 xs
+buildBDD env idxs
+  = buildBDD' env 2 idxs
   where
     buildBDD' :: BExp -> NodeId -> [Index] -> BDD
-    buildBDD' (Prim x) _ []
-      | x = (1, [])
-      | otherwise = (0, [])
-    buildBDD' e i (x : xs)
-      = (i, nodes1 ++ nodes2 ++ [node])
+    buildBDD' (Prim False) _ []
+      = (0, [])
+    buildBDD' (Prim True ) _ []
+      = (1, [])
+    buildBDD' exp id (idx : idxs)
+      = (id, node : nodes1 ++ nodes2)
       where
-        node = (i, (x, l, r))
-        e1 = restrict e x False
-        e2 = restrict e x True
-        (l, nodes1) = buildBDD' e1 (2 * i) xs
-        (r, nodes2) = buildBDD' e2 (2 * i + 1) xs
+        node = (id, (idx, id1, id2))
+        exp1 = restrict exp idx False
+        exp2 = restrict exp idx True
+        (id1, nodes1) = buildBDD' exp1 (2 * id) idxs
+        (id2, nodes2) = buildBDD' exp2 (2 * id + 1) idxs
 
 ------------------------------------------------------
 -- PART IV
 
+-- inverse lookup with a default value
+ilookUp :: Eq b => b -> [(a, b)] -> a -> a
+ilookUp _ [] x
+  = x
+ilookUp k ((v, k') : kvs) x
+  | k == k'   = v
+  | otherwise = ilookUp k kvs x
+
 -- Pre: Each variable index in the BExp appears exactly once
 --      in the Index list; there are no other elements
 buildROBDD :: BExp -> [Index] -> BDD
-buildROBDD 
-  = undefined
+buildROBDD env idxs
+  = fst (buildROBDD' env 2 idxs [])
+  where
+    buildROBDD' :: BExp -> NodeId -> [Index] -> [BDDNode] -> (BDD, [BDDNode])
+    buildROBDD' (Prim False) id [] _
+      = ((0, []), [])
+    buildROBDD' (Prim True ) id [] _
+      = ((1, []), [])
+    buildROBDD' exp id (idx : idxs) map
+      | id1' == id2'
+        = buildROBDD' exp1 (2 * id) idxs map
+      | otherwise
+        = ((id, node : nodesL' ++ nodesR'), node : mapR)
+      where
+        node = (id, (idx, id1', id2'))
+        exp1 = (restrict exp idx False)
+        exp2 = (restrict exp idx True)
+        ((id1, nodesL), mapL) = 
+          buildROBDD' exp1 (2 * id) idxs map
+        ((id2, nodesR), mapR) = 
+          buildROBDD' exp2 (2 * id + 1) idxs (mapL ++ map)
+        pl = if null nodesL 
+             then -1 
+             else (ilookUp (snd (head nodesL)) map (-1))
+        pr = if null nodesR 
+             then -1 
+             else (ilookUp (snd (head nodesR)) (map ++ mapL) (-1))
+        (id1', nodesL') = if (pl == -1) 
+                          then (id1, nodesL) 
+                          else (pl, [])
+        (id2', nodesR') = if (pr == -1) 
+                          then (id2, nodesR) 
+                          else (pr, [])
 
 ------------------------------------------------------
 -- Examples for testing...
