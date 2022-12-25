@@ -97,15 +97,24 @@ restrict (Or exp1 exp2) y z
 --     in the Index list; there are no other elements
 -- The question suggests the following definition (in terms of buildBDD')
 -- but you are free to implement the function differently if you wish.
+-- type BDDNode = (NodeId, (Index, NodeId, NodeId))
+-- type BDD = (NodeId, [BDDNode])
 buildBDD :: BExp -> [Index] -> BDD
-buildBDD 
-  = undefined
-
--- Potential helper function for buildBDD which you are free
--- to define/modify/ignore/delete/embed as you see fit.
-buildBDD' :: BExp -> NodeId -> [Index] -> BDD
-buildBDD' 
-  = undefined
+buildBDD e xs
+  = buildBDD' e 2 xs
+  where
+    buildBDD' :: BExp -> NodeId -> [Index] -> BDD
+    buildBDD' (Prim x) _ []
+      | x = (1, [])
+      | otherwise = (0, [])
+    buildBDD' e i (x : xs)
+      = (i, nodes1 ++ nodes2 ++ [node])
+      where
+        node = (i, (x, l, r))
+        e1 = restrict e x False
+        e2 = restrict e x True
+        (l, nodes1) = buildBDD' e1 (2 * i) xs
+        (r, nodes2) = buildBDD' e2 (2 * i + 1) xs
 
 ------------------------------------------------------
 -- PART IV
