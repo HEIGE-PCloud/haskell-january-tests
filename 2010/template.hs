@@ -49,9 +49,18 @@ partition
   = undefined
 
 findSubstrings' :: String -> SuffixTree -> [Int]
-findSubstrings'
-  = undefined
-
+findSubstrings' [] (Leaf y)
+  = [y]
+findSubstrings' _  (Leaf y)
+  = []
+findSubstrings' xs (Node ys)
+  = concatMap (match xs) ys
+    where
+      match :: String -> (String, SuffixTree) -> [Int]
+      match s (a, st)
+        | isPrefix s a = getIndices st
+        | isPrefix a s = findSubstrings' (removePrefix a s) st
+        | otherwise    = []
 ------------------------------------------------------
 
 insert :: (String, Int) -> SuffixTree -> SuffixTree
