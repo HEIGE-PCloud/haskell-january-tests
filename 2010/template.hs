@@ -28,9 +28,12 @@ isSubstring :: String -> String -> Bool
 isSubstring xs ys
   = or (map (isPrefix xs) (suffixes ys))
 
-findSubstrings :: String -> String -> [Int]
-findSubstrings
-  = undefined
+-- findSubstrings :: String -> String -> [Int]
+findSubstrings xs ys
+  = map fst fps
+  where
+    ps = zip [0..] (suffixes ys)
+    fps = filter ((isPrefix xs) . snd) ps
 
 ------------------------------------------------------
 
