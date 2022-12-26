@@ -11,10 +11,12 @@ isPrefix _ []
 isPrefix (x : xs) (y : ys)
   = x == y && isPrefix xs ys
 
-removePrefix :: String -> String -> String
-removePrefix
 --Pre: s is a prefix of s'
-  = undefined
+removePrefix :: String -> String -> String
+removePrefix [] ys
+  = ys
+removePrefix (x : xs) (y : ys)
+  = removePrefix xs ys
 
 suffixes :: [a] -> [[a]]
 suffixes
