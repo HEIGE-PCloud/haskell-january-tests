@@ -25,8 +25,8 @@ suffixes xxs@(_ : xs)
   = xxs : suffixes xs
 
 isSubstring :: String -> String -> Bool
-isSubstring
-  = undefined
+isSubstring xs ys
+  = or (map (isPrefix xs) (suffixes ys))
 
 findSubstrings :: String -> String -> [Int]
 findSubstrings
