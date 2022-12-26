@@ -1,4 +1,5 @@
-data SuffixTree = Leaf Int | Node [(String, SuffixTree)] 
+type Edge = (String, SuffixTree)
+data SuffixTree = Leaf Int | Node [Edge] 
                 deriving (Eq, Show)
 
 ------------------------------------------------------
@@ -36,7 +37,6 @@ findSubstrings xs ys
     fps = filter ((isPrefix xs) . snd) ps
 
 ------------------------------------------------------
--- data SuffixTree = Leaf Int | Node [(String, SuffixTree)] 
 
 getIndices :: SuffixTree -> [Int]
 getIndices (Leaf x)
@@ -65,7 +65,7 @@ findSubstrings' _  (Leaf y)
 findSubstrings' xs (Node ys)
   = concatMap (match xs) ys
     where
-      match :: String -> (String, SuffixTree) -> [Int]
+      match :: String -> Edge -> [Int]
       match s (a, st)
         | null y = getIndices st         -- s is a's prefix
         | null z = findSubstrings' y st  -- a is s's prefix
@@ -74,10 +74,24 @@ findSubstrings' xs (Node ys)
           (x, y, z) = partition s a
 
 ------------------------------------------------------
-
+-- data SuffixTree = Leaf Int | Node [(String, SuffixTree)] 
 insert :: (String, Int) -> SuffixTree -> SuffixTree
-insert 
-  = undefined
+insert (s, n) (Node ts)
+  | not hasCommonPrefix = Node ((s, Leaf n) : ts)
+  | otherwise = Node (map fst ts')
+  where
+    ts' = map (insert' (s, n)) ts
+    hasCommonPrefix = or (map snd ts')
+    insert' :: (String, Int) -> Edge -> (Edge, Bool)
+    insert' (s, n) (a, t)
+      -- no common prefix, a, t unchanged
+      | null p    = ((a, t), False)
+      -- a is a prefix of s
+      | null a'   = ((a, insert (s', n) t), True)
+      -- p /= a
+      | otherwise = ((p, Node [(s', Leaf n), (a', t)]), True)
+      where
+        (p, s', a') = partition s a
 
 -- This function is given
 buildTree :: String -> SuffixTree 
