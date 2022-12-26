@@ -45,8 +45,17 @@ getIndices (Node xs)
   = concatMap getIndices (map snd xs)
 
 partition :: Eq a => [a] -> [a] -> ([a], [a], [a])
-partition 
-  = undefined
+partition [] []
+  = ([], [], [])
+partition [] ys
+  = ([], [], ys)
+partition xs []
+  = ([], xs, [])
+partition xxs@(x : xs) yys@(y : ys)
+  | x /= y = ([], xxs, yys)
+  | otherwise = (x : xs', ys', zs')
+    where
+      (xs', ys', zs') = partition xs ys
 
 findSubstrings' :: String -> SuffixTree -> [Int]
 findSubstrings' [] (Leaf y)
