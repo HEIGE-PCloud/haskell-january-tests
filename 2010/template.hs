@@ -36,10 +36,13 @@ findSubstrings xs ys
     fps = filter ((isPrefix xs) . snd) ps
 
 ------------------------------------------------------
+-- data SuffixTree = Leaf Int | Node [(String, SuffixTree)] 
 
 getIndices :: SuffixTree -> [Int]
-getIndices 
-  = undefined
+getIndices (Leaf x)
+  = [x]
+getIndices (Node xs)
+  = concatMap getIndices (map snd xs)
 
 partition :: Eq a => [a] -> [a] -> ([a], [a], [a])
 partition 
