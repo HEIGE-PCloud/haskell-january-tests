@@ -74,7 +74,6 @@ findSubstrings' xs (Node ys)
           (x, y, z) = partition s a
 
 ------------------------------------------------------
--- data SuffixTree = Leaf Int | Node [(String, SuffixTree)] 
 insert :: (String, Int) -> SuffixTree -> SuffixTree
 insert (s, n) (Node ts)
   | not hasCommonPrefix = Node ((s, Leaf n) : ts)
@@ -100,11 +99,19 @@ buildTree s
 
 ------------------------------------------------------
 -- Part IV
-
+-- data SuffixTree = Leaf Int | Node [(String, SuffixTree)] 
 longestRepeatedSubstring :: SuffixTree -> String
-longestRepeatedSubstring 
-  = undefined
+longestRepeatedSubstring (Leaf _)
+  = []
+longestRepeatedSubstring (Node xs)
+  = longestString [s ++ longestRepeatedSubstring(Node x) | (s, Node x) <- xs]
 
+-- given a list of strings, return the longest string in the lst
+longestString :: [String] -> String
+longestString [] = []
+longestString (x : xs)
+  | length x > length (longestString xs) = x
+  | otherwise = longestString xs
 ------------------------------------------------------
 -- Example strings and suffix trees...
 
