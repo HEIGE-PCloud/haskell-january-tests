@@ -67,9 +67,12 @@ findSubstrings' xs (Node ys)
     where
       match :: String -> (String, SuffixTree) -> [Int]
       match s (a, st)
-        | isPrefix s a = getIndices st
-        | isPrefix a s = findSubstrings' (removePrefix a s) st
-        | otherwise    = []
+        | null y = getIndices st         -- s is a's prefix
+        | null z = findSubstrings' y st  -- a is s's prefix
+        | otherwise = []
+        where
+          (x, y, z) = partition s a
+
 ------------------------------------------------------
 
 insert :: (String, Int) -> SuffixTree -> SuffixTree
