@@ -64,7 +64,7 @@ reverseLookUp y []
   = []
 reverseLookUp y ((x', y') : xys)
   | y == y' = x' : reverseLookUp y xys
-  | otherwise = reverseLookUp y xys
+  | otherwise    = reverseLookUp y xys
 
 
 occurs :: String -> Type -> Bool
@@ -173,20 +173,75 @@ combineSubs :: [Sub] -> Sub
 combineSubs 
   = foldr1 combine
 
+names :: [String]
+names = ['a' : (show x) | x <- [1..]]
+
 inferPolyType :: Expr -> Type
-inferPolyType
-  = undefined
+inferPolyType exp
+  = t
+  where
+    (_, t, _) = inferPolyType' exp [] names
 
 -- You may optionally wish to use one of the following helper function declarations
 -- as suggested in the specification. 
 
--- inferPolyType' :: Expr -> TEnv -> [String] -> (Sub, Type, [String])
--- inferPolyType'
---   = undefined
+inferPolyType' :: Expr -> TEnv -> [String] -> (Sub, Type, [String])
+inferPolyType' (Number _) e ns
+  = ([], TInt, ns)
 
--- inferPolyType' :: Expr -> TEnv -> Int -> (Sub, Type, Int)
--- inferPolyType' 
---   = undefined
+inferPolyType' (Boolean _) e ns
+  = ([], TBool, ns)
+
+inferPolyType' (Id x) e nns@(n : ns)
+  = case lookup x e of
+    Just t -> ([], t, nns)
+    Nothing -> ([(x ,TVar n)], TVar n, ns)
+
+inferPolyType' (Prim x) e ns
+  = ([], lookUp x primTypes, ns)
+
+inferPolyType' (Fun x e) env nns@(n : ns)
+  | te == TErr = ([], TErr, nns)
+  | otherwise = (sub, TFun tx te, ns') 
+    where
+      env' = (x, TVar n) : env
+      (sub, te, ns') = inferPolyType' e env' ns
+      tx = applySub sub (TVar n)
+
+inferPolyType' (App f e) env ns
+  = case sub of 
+      Nothing -> ([], TErr, ns)
+      Just s3 -> (combineSubs [s3, s2, s1], applySub s3 v, ns'')
+    where
+      (s1, tf, ns') = inferPolyType' f env ns
+      env2 = updateTEnv env s1
+      (s2, te, (n : ns'')) = inferPolyType' e env2 ns'
+      v = TVar n
+      sub = unify tf (TFun te v)
+
+inferPolyType' (Cond e1 e2 e3) env ns
+  -- = case sub1 of
+  --     Nothing -> ([], TErr, ns)
+  --     Just s4 -> case sub2 of
+  --       Nothing -> ([], TErr, ns)
+  --       Just s5 -> (combineSubs [s5, s4, s3, s2, s1], applySub s5 t2', ns3)
+  -- = (s1, t1, take 1 ns1) -- ([("x",TVar "a1")],TVar "a1",["a2"])
+  -- = (s2, t2, take 1 ns2) -- ([("a4",TInt),("a3",TFun TInt TInt),("a2",TInt),("x",TInt)],TInt,["a5"])
+  -- = (s3, t3, take 1 ns3) -- ([("a7",TInt),("a6",TFun TInt TInt),("a5",TInt),("x",TInt)],TInt,["a8"])
+  = (env2, t1, [])
+
+    where
+      (s1, t1, ns1) = inferPolyType' e1 env ns
+      env2 = updateTEnv env s1
+      (s2, t2, ns2) = inferPolyType' e2 env2 ns1
+      env3 = updateTEnv env2 s2
+      (s3, t3, ns3) = inferPolyType' e3 env3 ns2
+      t1' = applySub (combineSubs [s3, s2, s1]) t1
+      t2' = applySub (combineSubs [s3, s2]) t2
+      t3' = applySub s3 t3
+      sub1 = unify t1' TBool -- [("a1",TBool)]
+      sub2 = unify t2' t3'
+
 
 ------------------------------------------------------
 -- Monomorphic type inference test cases from Table 1...
@@ -270,9 +325,25 @@ ex12 = Fun "x" (Fun "y" (App (Id "y") (Id "x")))
 type12 = TFun (TVar "a1") (TFun (TFun (TVar "a1") (TVar "a3")) (TVar "a3"))
 
 ex13 = Fun "x" (Fun "y" (App (App (Id "y") (Id "x")) (Number 7)))
-type13 = TFun (TVar "a1") (TFun (TFun (TVar "a1") (TFun TInt (TVar "a3"))) 
-              (TVar "a3"))
+type13 = TFun (TVar "a1") (TFun (TFun (TVar "a1") (TFun TInt (TVar "a4"))) 
+              (TVar "a4"))
 
 ex14 = Fun "x" (Fun "y" (App (Id "x") (Prim "+"))) 
 type14 = TFun (TFun (TFun TInt (TFun TInt TInt)) (TVar "a3")) 
               (TFun (TVar "a2") (TVar "a3"))
+
+ex15 = Cond (Id "x") (App (Prim "not") (Id "x")) (Id "x")
+type15 = TBool
+
+ex16 = Cond (Id "x") (Id "x") (App (Prim "not") (Id "x"))
+type16 = TBool
+
+ex17 = Fun "x" (Cond (Id "x") (App (Prim "not") (Id "x")) (Id "x"))
+type17 = TFun TBool TBool
+
+ex18 = Cond (Id "x") (App (App (Prim "+") (Id "x")) (Number 5)) 
+      (App (App (Prim "+") (Id "x")) (Number 3))
+type18 = TErr
+
+ex19 = Cond (Id "x") (Id "x") (Id "x")
+type19 = TVar "a1"
