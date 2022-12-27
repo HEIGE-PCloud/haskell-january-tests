@@ -130,9 +130,6 @@ head' :: [a] -> Maybe a
 head' []     = Nothing
 head' (x:xs) = Just x
 
-snd' :: (a, b) -> Maybe b
-snd' (x, y) = Just y
-
 -- Pre: Each variable index in the BExp appears exactly once
 --      in the Index list; there are no other elements
 buildROBDD :: BExp -> [Index] -> BDD
@@ -150,15 +147,16 @@ buildROBDD env idxs
       | otherwise
         = ((id, node : nodesL' ++ nodesR'), node : mapR)
       where
+        map' = map ++ mapL
         node = (id, (idx, id1', id2'))
         exp1 = (restrict exp idx False)
         exp2 = (restrict exp idx True)
         ((id1, nodesL), mapL) = 
           buildROBDD' exp1 (2 * id) idxs map
         ((id2, nodesR), mapR) = 
-          buildROBDD' exp2 (2 * id + 1) idxs (mapL ++ map)
-        pl = (Just nodesL) >>= head' >>= snd' >>= (`ilookUp` map)
-        pr = (Just nodesR) >>= head' >>= snd' >>= (`ilookUp` (map ++ mapL))
+          buildROBDD' exp2 (2 * id + 1) idxs map'
+        pl = (Just nodesL) >>= head' >>= (return . snd) >>= (`ilookUp` map)
+        pr = (Just nodesR) >>= head' >>= (return . snd) >>= (`ilookUp` map')
         (id1', nodesL') = case pl of
                             Nothing -> (id1, nodesL)
                             Just pl' -> (pl', [])
