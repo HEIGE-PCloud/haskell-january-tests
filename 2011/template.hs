@@ -49,21 +49,39 @@ primTypes
 
 -- Pre: The search item is in the table
 lookUp :: Eq a => a -> [(a, b)] -> b
-lookUp 
-  = undefined
+lookUp x xys
+  = fromJust (lookup x xys)
 
 tryToLookUp :: Eq a => a -> b -> [(a, b)] -> b
-tryToLookUp 
-  = undefined
+tryToLookUp x z xys
+  = case lookup x xys of
+      Nothing -> z
+      Just y -> y
 
 -- Pre: The given value is in the table
 reverseLookUp :: Eq b => b -> [(a, b)] -> [a]
-reverseLookUp 
-  = undefined
+reverseLookUp y []
+  = []
+reverseLookUp y ((x', y') : xys)
+  | y == y' = x' : reverseLookUp y xys
+  | otherwise = reverseLookUp y xys
 
+-- data Type = TInt |
+--             TBool |
+--             TFun Type Type |
+--             TVar String |
+--             TErr 
 occurs :: String -> Type -> Bool
-occurs 
-  = undefined
+occurs _ TInt 
+  = False
+occurs _ TBool
+  = False
+occurs x (TFun t t')
+  = (occurs x t) || (occurs x t')
+occurs x (TVar y)
+  = x == y
+occurs _ TErr
+  = False
 
 ------------------------------------------------------
 -- PART II
