@@ -86,9 +86,29 @@ occurs _ TErr
 -- Pre: All variables in the expression have a binding in the given 
 --      type environment
 inferType :: Expr -> TEnv -> Type
-inferType
-  = undefined
-
+inferType (Number _) _
+  = TInt
+inferType (Boolean _) _
+  = TBool
+inferType (Id x) e
+  = lookUp x e
+inferType (Prim x) e
+  = lookUp x primTypes
+inferType (Cond exp0 exp1 exp2) env
+  | t0 == TBool && t1 == t2 = t1
+  | otherwise = TErr
+    where
+      t0 = inferType exp0 env
+      t1 = inferType exp1 env
+      t2 = inferType exp2 env
+inferType (App exp0 exp1) env
+  | t0 == TErr || t1 == TErr = TErr
+  | otherwise = case t0 of
+    (TFun t t') -> if t == t1 then t' else TErr
+    otherwise -> TErr
+  where
+    t0 = inferType exp0 env
+    t1 = inferType exp1 env
 ------------------------------------------------------
 -- PART III
 
