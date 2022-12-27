@@ -128,9 +128,31 @@ unify :: Type -> Type -> Maybe Sub
 unify t t'
   = unifyPairs [(t, t')] []
 
+pmap :: (a -> b) -> [(a, a)] -> [(b, b)]
+pmap f [] = []
+pmap f ((x, x') : xs) = (f x, f x') : pmap f xs
+
 unifyPairs :: [(Type, Type)] -> Sub -> Maybe Sub
-unifyPairs
-  = undefined
+unifyPairs [] s
+  = Just s
+unifyPairs ((TInt, TInt) : ts) s
+  = unifyPairs ts s
+unifyPairs ((TBool, TBool) : ts) s
+  = unifyPairs ts s
+unifyPairs ((TVar v, t@(TVar v')) : ts) s
+  | v == v' = unifyPairs ts s
+unifyPairs ((TVar v, t) : ts) s
+  | occurs v t = Nothing
+  | otherwise = unifyPairs (pmap (applySub [b]) ts) s'
+  where
+    b = (v, t)
+    s' = b : s
+unifyPairs ((t, TVar v) : ts) s
+  = unifyPairs ((TVar v, t) : ts) s
+unifyPairs ((TFun t1 t2, TFun t1' t2') : ts) s
+  = unifyPairs ((t1, t1') : (t2, t2') : ts) s
+unifyPairs _ _
+  = Nothing
 
 ------------------------------------------------------
 -- PART IV
