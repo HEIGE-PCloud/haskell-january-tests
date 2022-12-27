@@ -119,12 +119,19 @@ buildBDD env idxs
 -- PART IV
 
 -- inverse lookup with a default value
-ilookUp :: Eq b => b -> [(a, b)] -> a -> a
-ilookUp _ [] x
-  = x
-ilookUp k ((v, k') : kvs) x
-  | k == k'   = v
-  | otherwise = ilookUp k kvs x
+ilookUp :: Eq b => b -> [(a, b)] -> Maybe a
+ilookUp _ []
+  = Nothing
+ilookUp k ((v, k') : kvs)
+  | k == k'   = Just v
+  | otherwise = ilookUp k kvs
+
+head' :: [a] -> Maybe a
+head' []     = Nothing
+head' (x:xs) = Just x
+
+snd' :: (a, b) -> Maybe b
+snd' (x, y) = Just y
 
 -- Pre: Each variable index in the BExp appears exactly once
 --      in the Index list; there are no other elements
@@ -150,19 +157,14 @@ buildROBDD env idxs
           buildROBDD' exp1 (2 * id) idxs map
         ((id2, nodesR), mapR) = 
           buildROBDD' exp2 (2 * id + 1) idxs (mapL ++ map)
-        pl = if null nodesL 
-             then -1 
-             else (ilookUp (snd (head nodesL)) map (-1))
-        pr = if null nodesR 
-             then -1 
-             else (ilookUp (snd (head nodesR)) (map ++ mapL) (-1))
-        (id1', nodesL') = if (pl == -1) 
-                          then (id1, nodesL) 
-                          else (pl, [])
-        (id2', nodesR') = if (pr == -1) 
-                          then (id2, nodesR) 
-                          else (pr, [])
-
+        pl = (Just nodesL) >>= head' >>= snd' >>= (`ilookUp` map)
+        pr = (Just nodesR) >>= head' >>= snd' >>= (`ilookUp` (map ++ mapL))
+        (id1', nodesL') = case pl of
+                            Nothing -> (id1, nodesL)
+                            Just pl' -> (pl', [])
+        (id2', nodesR') = case pr of
+                            Nothing -> (id2, nodesR)
+                            Just pr' -> (pr', [])
 ------------------------------------------------------
 -- Examples for testing...
 
