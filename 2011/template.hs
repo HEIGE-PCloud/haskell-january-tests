@@ -112,8 +112,17 @@ inferType (App exp0 exp1) env
 ------------------------------------------------------
 -- PART III
 
-applySub
-  = undefined
+applySub :: Sub -> Type -> Type
+applySub _ TInt
+  = TInt
+applySub _ TBool
+  = TBool
+applySub s (TFun t t')
+  = TFun (applySub s t) (applySub s t')
+applySub s (TVar v)
+  = tryToLookUp v (TVar v) s
+applySub _ TErr
+  = TErr
 
 unify :: Type -> Type -> Maybe Sub
 unify t t'
