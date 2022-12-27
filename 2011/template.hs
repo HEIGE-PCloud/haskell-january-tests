@@ -220,28 +220,22 @@ inferPolyType' (App f e) env ns
       sub = unify tf (TFun te v)
 
 inferPolyType' (Cond e1 e2 e3) env ns
-  -- = case sub1 of
-  --     Nothing -> ([], TErr, ns)
-  --     Just s4 -> case sub2 of
-  --       Nothing -> ([], TErr, ns)
-  --       Just s5 -> (combineSubs [s5, s4, s3, s2, s1], applySub s5 t2', ns3)
-  -- = (s1, t1, take 1 ns1) -- ([("x",TVar "a1")],TVar "a1",["a2"])
-  -- = (s2, t2, take 1 ns2) -- ([("a4",TInt),("a3",TFun TInt TInt),("a2",TInt),("x",TInt)],TInt,["a5"])
-  -- = (s3, t3, take 1 ns3) -- ([("a7",TInt),("a6",TFun TInt TInt),("a5",TInt),("x",TInt)],TInt,["a8"])
-  = (env2, t1, [])
-
+  = case sub1 of
+      Nothing -> ([], TErr, ns)
+      Just s4 -> case sub2 of
+        Nothing -> ([], TErr, ns)
+        Just s5 -> (combineSubs [s5, s4, s3, s2, s1], applySub s5 t2', ns3)
     where
       (s1, t1, ns1) = inferPolyType' e1 env ns
-      env2 = updateTEnv env s1
+      env2 = s1 ++ (updateTEnv env s1)
       (s2, t2, ns2) = inferPolyType' e2 env2 ns1
-      env3 = updateTEnv env2 s2
+      env3 = s2 ++ (updateTEnv env2 s2)
       (s3, t3, ns3) = inferPolyType' e3 env3 ns2
       t1' = applySub (combineSubs [s3, s2, s1]) t1
       t2' = applySub (combineSubs [s3, s2]) t2
       t3' = applySub s3 t3
-      sub1 = unify t1' TBool -- [("a1",TBool)]
+      sub1 = unify t1' TBool
       sub2 = unify t2' t3'
-
 
 ------------------------------------------------------
 -- Monomorphic type inference test cases from Table 1...
@@ -347,3 +341,19 @@ type18 = TErr
 
 ex19 = Cond (Id "x") (Id "x") (Id "x")
 type19 = TVar "a1"
+
+ex20 = Cond (Boolean True) (App (App (Prim "+") (Id "x")) (Number 5)) (Id "x")
+type20 = TInt
+
+ex21 = Cond (Boolean True) (Id "x") (App (App (Prim "+") (Id "x")) (Number 5))
+type21 = TInt
+
+ex22 = Cond (Id "x") (App (Prim "not") (Id "x")) (App (App (Prim "+") (Id "x"))
+       (Number 5))
+type22 = TErr
+
+ex23 = Cond (Id "y") (Id "x") (App (App (Prim "+") (Id "x")) (Number 5))
+type23 = TInt
+
+ex24 = Cond (App (Fun "x" (App (Prim "not") (Id "x"))) (Id "y")) (Id "y") (Id "y") 
+type24 = TBool
