@@ -101,17 +101,22 @@ buildTree s
 -- Part IV
 -- data SuffixTree = Leaf Int | Node [(String, SuffixTree)] 
 longestRepeatedSubstring :: SuffixTree -> String
-longestRepeatedSubstring (Leaf _)
-  = []
-longestRepeatedSubstring (Node xs)
-  = longestString [s ++ longestRepeatedSubstring(Node x) | (s, Node x) <- xs]
+longestRepeatedSubstring 
+  = concat . snd . lrs
 
--- given a list of strings, return the longest string in the lst
-longestString :: [String] -> String
-longestString [] = []
-longestString (x : xs)
-  | length x > length (longestString xs) = x
-  | otherwise = longestString xs
+(+:) :: Num a => (a, b) -> (a, [b]) -> (a, [b])
+(+:) (x, y) (x', y') = (x + x', y : y')
+
+maximum' :: [(Int, [String])] -> (Int, [String])
+maximum' [] = (0, [])
+maximum' xs = maximum xs
+
+lrs :: SuffixTree -> (Int, [String])
+lrs (Leaf _)
+  = (0, [])
+lrs (Node xs)
+  = maximum' [ (length s, s) +: (lrs (Node x)) | (s, Node x) <- xs]
+
 ------------------------------------------------------
 -- Example strings and suffix trees...
 
