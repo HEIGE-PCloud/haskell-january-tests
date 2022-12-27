@@ -66,11 +66,7 @@ reverseLookUp y ((x', y') : xys)
   | y == y' = x' : reverseLookUp y xys
   | otherwise = reverseLookUp y xys
 
--- data Type = TInt |
---             TBool |
---             TFun Type Type |
---             TVar String |
---             TErr 
+
 occurs :: String -> Type -> Bool
 occurs _ TInt 
   = False
