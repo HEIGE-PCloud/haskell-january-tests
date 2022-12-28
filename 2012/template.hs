@@ -73,12 +73,12 @@ accepts ids pds
         = True
       accepts' _ pds STOP
         = False
-      accepts' id pds (Ref id')
+      accepts' ids pds (Ref id')
         = case lookup id' pds of
           Nothing -> False
           Just p -> accepts' ids pds p
       accepts' (id : ids) pds (Prefix id' p)
-        = id == id'
+        = id == id' && accepts' ids pds p
       accepts' ids pds (Choice ps)
         = or (map (accepts' ids pds) ps)
 
