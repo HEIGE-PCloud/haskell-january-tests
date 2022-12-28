@@ -47,15 +47,41 @@ alphabet
 ------------------------------------------------------
 -- PART II
 
+--data Process = STOP | Ref Id | Prefix Id Process | Choice [Process] 
 actions :: Process -> [Id]
-actions
-  = undefined
+actions STOP
+  = []
+actions (Ref id)
+  = []
+actions (Prefix id p)
+  = nub $ id : actions p
+actions (Choice ps)
+  = nub $ concatMap actions ps
 
 accepts :: [Id] -> [ProcessDef] -> Bool
 --Pre: The first item in the list of process definitions is
 --     that of the start process.
-accepts 
-  = undefined
+accepts [] _
+  = True
+accepts _ []
+  = False
+accepts ids pds
+  = accepts' ids pds (snd $ head pds)
+    where
+      accepts' :: [Id] -> [ProcessDef] -> Process -> Bool
+      accepts' [] _ _
+        = True
+      accepts' _ pds STOP
+        = False
+      accepts' id pds (Ref id')
+        = case lookup id' pds of
+          Nothing -> False
+          Just p -> accepts' ids pds p
+      accepts' (id : ids) pds (Prefix id' p)
+        = id == id'
+      accepts' ids pds (Choice ps)
+        = or (map (accepts' ids pds) ps)
+
 
 ------------------------------------------------------
 -- PART III
@@ -110,6 +136,9 @@ play
 
 maker 
   = ("MAKER", Prefix "make" (Prefix "ready" (Ref "MAKER")))
+
+maker2
+  = ("MAKER", Prefix "make" (Prefix "ready" (Prefix "make" (Prefix "ready" (Ref "MAKER")))))
 
 user  
   = ("USER",  Prefix "ready" (Prefix "use" (Ref "USER")))
