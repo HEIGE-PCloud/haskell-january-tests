@@ -19,12 +19,6 @@ lookUp v env
 
 ---------------------------------------------------------
 -- Part I
--- data Exp = Const Int | 
---            Var Id | 
---            Fun [Id] Exp |
---            App Exp [Exp] |
---            Let [Binding] Exp 
--- type Binding = (Id, Exp)
 isFun :: Exp -> Bool
 isFun (Fun _ _)
   = True
@@ -58,11 +52,26 @@ topLevelFunctions _
 
 unionAll :: Eq a => [[a]] -> [a]
 unionAll
-  = undefined
+  = foldl' union []
 
+-- data Exp = Const Int | 
+--            Var Id | 
+--            Fun [Id] Exp |
+--            App Exp [Exp] |
+--            Let [Binding] Exp 
+-- type Binding = (Id, Exp)
 freeVars :: Exp -> [Id]
-freeVars 
-  = undefined
+freeVars (Const _)
+  = []
+freeVars (Var i)
+  | i `elem` prims = []
+  | otherwise = [i]
+freeVars (App f es)
+  = unionAll ((freeVars f) : (map freeVars es))
+freeVars (Fun ids e)
+  = (freeVars e) \\ ids
+freeVars (Let bs e)
+  = unionAll (freeVars e : map (freeVars . snd) bs) \\ map fst bs
 
 ---------------------------------------------------------
 -- Part III
