@@ -19,18 +19,39 @@ lookUp v env
 
 ---------------------------------------------------------
 -- Part I
-
+-- data Exp = Const Int | 
+--            Var Id | 
+--            Fun [Id] Exp |
+--            App Exp [Exp] |
+--            Let [Binding] Exp 
+-- type Binding = (Id, Exp)
 isFun :: Exp -> Bool
-isFun 
-  = undefined
+isFun (Fun _ _)
+  = True
+isFun _
+  = False
 
 splitDefs :: [Binding] -> ([Binding], [Binding])
-splitDefs 
-  = undefined
+splitDefs []
+  = ([], [])
+splitDefs (b@(_, e) : bs)
+  | isFun e = (b : fs, vs)
+  | otherwise = (fs, b : vs)
+  where
+    (fs, vs) = splitDefs bs
 
 topLevelFunctions :: Exp -> Int
-topLevelFunctions 
-  = undefined
+topLevelFunctions (Let bs _)
+  = countFunctions bs
+  where
+    countFunctions :: [Binding] -> Int
+    countFunctions []
+      = 0
+    countFunctions ((_, e) : bs)
+      | isFun e = 1 + countFunctions bs
+      | otherwise = countFunctions bs
+topLevelFunctions _
+  = 0
 
 ---------------------------------------------------------
 -- Part II
@@ -73,3 +94,5 @@ lift
 lift' :: Exp -> (Exp, [Supercombinator])
 lift' 
   = undefined
+
+
