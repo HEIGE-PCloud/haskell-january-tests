@@ -28,7 +28,7 @@ degrees ((n : ns), es)
 -- other (1, 2) 2 -> 1
 other :: Eq a => (a, a) -> a -> a
 other (x, y) z
-  | x == z = y
+  | x == z    = y
   | otherwise = x
 
 neighbours :: Eq a => a -> Graph a -> [a]
@@ -40,7 +40,7 @@ removeNode n (ns, es)
   = (ns', es')
   where
     ns' = filter (/= n) ns
-    es' = filter ((/= n) . snd) (filter ((/= n) . fst) es)
+    es' = filter (\(e1, e2) -> e1 /= n && e2 /= n) es
 ------------------------------------------------------
 --
 -- Part II
@@ -71,7 +71,7 @@ buildIdMap cs
   where
     build :: (Id, Colour) -> (Id, Id)
     build (i, c)
-      | c == 0 = (i, i)
+      | c == 0    = (i, i)
       | otherwise = (i, 'R' : (show c))
 
 buildArgAssignments :: [Id] -> IdMap -> [Statement]
@@ -80,7 +80,7 @@ buildArgAssignments ids idm
     where
       build :: (Id, Id) -> [Statement] -> [Statement]
       build (i, i') ss
-        | i == i' = ss 
+        | i == i'   = ss 
         | otherwise = (Assign i' (Var i)) : ss
 
 renameExp :: Exp -> IdMap -> Exp
