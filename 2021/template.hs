@@ -124,8 +124,14 @@ renameFun (f, as, b) idMap
 -- Part IV
 --
 buildIG :: [[Id]] -> IG
-buildIG 
-  = undefined
+buildIG lvs
+  = (ids, es)
+  where
+    ids = nub $ concat lvs
+    es = nub $ concatMap build lvs
+    build :: [Id] -> [Edge Id]
+    build ids
+      = [(i1, i2) | i1 <- ids, i2 <- ids, i1 < i2]
 
 -----------------------------------------------------
 --
