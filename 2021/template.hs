@@ -45,9 +45,25 @@ removeNode n (ns, es)
 --
 -- Part II
 --
+-- type Edge a = (a, a)
+-- type Graph a = ([a], [Edge a])
+-- type Colour = Int 
+-- type Colouring a = [(a, Colour)]
+swap :: (a, b) -> (b, a)
+swap (x, y) = (y, x)
+
 colourGraph :: (Ord a, Show a) => Int -> Graph a -> Colouring a
-colourGraph 
-  = undefined
+colourGraph _ ([], _)
+  = []
+colourGraph x g
+  = c : cs
+    where
+      (_, n) = minimum (map swap (degrees g))
+      cs = colourGraph x (removeNode n g)
+      is = [1..x] \\ map (`lookUp` cs) (neighbours n g)
+      c = case is of
+        [] -> (n, 0)
+        (i : _) -> (n, i)
 
 ------------------------------------------------------
 --
