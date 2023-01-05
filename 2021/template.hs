@@ -45,10 +45,6 @@ removeNode n (ns, es)
 --
 -- Part II
 --
--- type Edge a = (a, a)
--- type Graph a = ([a], [Edge a])
--- type Colour = Int 
--- type Colouring a = [(a, Colour)]
 swap :: (a, b) -> (b, a)
 swap (x, y) = (y, x)
 
@@ -70,24 +66,54 @@ colourGraph x g
 -- Part III
 --
 buildIdMap :: Colouring Id -> IdMap
-buildIdMap 
-  = undefined
+buildIdMap cs
+  = ("return", "return") : (map build cs)
+  where
+    build :: (Id, Colour) -> (Id, Id)
+    build (i, c)
+      | c == 0 = (i, i)
+      | otherwise = (i, 'R' : (show c))
 
 buildArgAssignments :: [Id] -> IdMap -> [Statement]
-buildArgAssignments 
-  = undefined
+buildArgAssignments ids idm
+  = foldr build [] (zip ids (map (`lookUp` idm) ids))
+    where
+      build :: (Id, Id) -> [Statement] -> [Statement]
+      build (i, i') ss
+        | i == i' = ss 
+        | otherwise = (Assign i' (Var i)) : ss
 
 renameExp :: Exp -> IdMap -> Exp
 -- Pre: A precondition is that every variable referenced in 
 -- the expression is in the idMap. 
-renameExp 
-  = undefined
+renameExp exp@(Const _) _
+  = exp
+renameExp (Var id) idm
+  = Var (lookUp id idm)
+renameExp (Apply op e1 e2) idm
+  = Apply op (renameExp e1 idm) (renameExp e2 idm)
 
 renameBlock :: Block -> IdMap -> Block
 -- Pre: A precondition is that every variable referenced in 
 -- the block is in the idMap. 
-renameBlock 
-  = undefined
+renameBlock bs idm
+  = filter assign (map (`renameStatement` idm) bs)
+  where
+    assign :: Statement -> Bool
+    assign (Assign id (Var id'))
+      = id /= id'
+    assign _
+      = True
+
+renameStatement :: Statement -> IdMap -> Statement
+-- Pre: A precondition is that every variable referenced in 
+-- the statement is in the idMap. 
+renameStatement (Assign id exp) idm
+  = Assign (lookUp id idm) (renameExp exp idm)
+renameStatement (If exp b1 b2) idm
+  = If (renameExp exp idm) (renameBlock b1 idm) (renameBlock b2 idm)
+renameStatement (While exp b) idm
+  = While (renameExp exp idm) (renameBlock b idm)
 
 renameFun :: Function -> IdMap -> Function
 renameFun (f, as, b) idMap
