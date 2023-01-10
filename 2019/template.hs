@@ -138,7 +138,7 @@ dp cnfrep
     where
       (cnfrep', units) = propUnits cnfrep
       (ccs@(c : cs) : ccs') = cnfrep'
-      cnfrep1 = [c] : ccs : ccs'
+      cnfrep1 = [c]  : ccs : ccs'
       cnfrep2 = [-c] : ccs : ccs'
 
 --------------------------------------------------------------------------
@@ -168,5 +168,5 @@ allSat f
                    ++ (map ((-id) :) (allSol ids sol))
       sat :: IdMap -> Int -> (Id, Bool)
       sat idm num
-        | num >= 0 = (reverseLookUp num idm, True)
+        | num >= 0  = (reverseLookUp   num  idm, True )
         | otherwise = (reverseLookUp (-num) idm, False)
