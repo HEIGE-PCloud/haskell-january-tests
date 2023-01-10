@@ -25,18 +25,28 @@ printF
 -- 1 mark
 lookUp :: Eq a => a -> [(a, b)] -> b
 -- Pre: The item being looked up has a unique binding in the list
-lookUp 
-  = undefined
+lookUp x xys
+  = fromJust (lookup x xys)
 
 -- 3 marks
+-- data Formula = Var Id
+--              | Not Formula
+--              | And Formula Formula
+--              | Or  Formula Formula
 vars :: Formula -> [Id]
-vars 
-  = undefined
+vars (Var id)
+  = [id]
+vars (Not f)
+  = vars f
+vars (And f1 f2)
+  = sort (nub (vars f1 ++ vars f2))
+vars (Or f1 f2)
+  = sort (nub (vars f1 ++ vars f2))
 
 -- 1 mark
 idMap :: Formula -> IdMap
-idMap 
-  = undefined
+idMap f
+  = zip (vars f) [1..]
 
 --------------------------------------------------------------------------
 -- Part II
