@@ -152,7 +152,29 @@ dp cnfrep
 -- Part IV
 
 -- Bonus 2 marks
-allSat :: Formula -> [[(Id, Bool)]]
-allSat
-  = undefined
+reverseLookUp :: (Show b, Eq b) => b -> [(a, b)] -> a
+reverseLookUp y ((x, y') : xys)
+  | y == y' = x
+  | otherwise = reverseLookUp y xys
 
+allSat :: Formula -> [[(Id, Bool)]]
+allSat f
+  = map sat allSols
+    where
+      sols = dp (flatten (toCNF f))
+      idm = idMap f
+      ids = map snd idm
+      allSols = concatMap (allSol ids) sols
+      allSol :: [Int] -> [Int] -> [[Int]]
+      allSol [] sol
+        = [sol]
+      allSol (id : ids) sol
+        | (id `elem` sol) || ((-id) `elem` sol) = allSol ids sol
+        | otherwise = (map (id :) (allSol ids sol)) ++ (map ((-id) :) (allSol ids sol))
+      sat :: [Int] -> [(Id, Bool)]
+      sat sol
+        = sort $ map (sat' idm) sol
+      sat' :: IdMap -> Int -> (Id, Bool)
+      sat' idm num
+        | num >= 0 = (reverseLookUp num idm, True)
+        | otherwise = (reverseLookUp (-num) idm, False)
