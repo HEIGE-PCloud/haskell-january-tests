@@ -2,6 +2,7 @@ module SOL where
 
 import Data.List
 import Data.Maybe
+import Data.Tuple
 
 import Types
 import TestData
@@ -91,14 +92,6 @@ toCNF
       = distribute (toCNF' f1) (toCNF' f2)
 
 -- 4 marks
--- (!b & (!a | c))
--- (!b & (!a | c))
--- data Formula = Var Id
---              | Not Formula
---              | And Formula Formula
---              | Or  Formula Formula
--- type CNFRep = [[Int]]
--- [[1,2,3], [-1,4,5]]
 flatten :: CNF -> CNFRep
 flatten f
   = flatten' f (idMap f)
@@ -124,10 +117,10 @@ isSingleton _   = False
 propUnits :: CNFRep -> (CNFRep, [Int])
 propUnits cnfrep
   | null units = (cnfrep, [])
-  | otherwise = (cnfrep'', unit ++ us)
+  | otherwise  = (cnfrep'', unit ++ us)
     where
-      units = filter isSingleton cnfrep
-      unit = head units
+      units   = filter isSingleton cnfrep
+      unit    = head units
       cnfrep' = mapMaybe (prop unit) cnfrep
       (cnfrep'', us) = propUnits cnfrep'
       prop :: [Int] -> [Int] -> Maybe [Int]
@@ -144,22 +137,23 @@ dp cnfrep
   | otherwise = (map (++ units) (dp cnfrep1)) ++ (map (++ units) (dp cnfrep2))
     where
       (cnfrep', units) = propUnits cnfrep
-      (xxs@(x : xs) : xxs') = cnfrep'
-      cnfrep1 = [x] : xxs : xxs'
-      cnfrep2 = [-x] : xxs : xxs'
+      (ccs@(c : cs) : ccs') = cnfrep'
+      cnfrep1 = [c] : ccs : ccs'
+      cnfrep2 = [-c] : ccs : ccs'
 
 --------------------------------------------------------------------------
 -- Part IV
 
 -- Bonus 2 marks
 reverseLookUp :: (Show b, Eq b) => b -> [(a, b)] -> a
-reverseLookUp y ((x, y') : xys)
-  | y == y' = x
-  | otherwise = reverseLookUp y xys
+reverseLookUp y xys
+  = lookUp y (map swap xys)
 
+-- first construct all solutions as [[Int]] after dp
+-- next map each solution into the [[(Id, Bool)]] format
 allSat :: Formula -> [[(Id, Bool)]]
 allSat f
-  = map sat allSols
+  = map (sort . map (sat idm)) allSols
     where
       sols = dp (flatten (toCNF f))
       idm = idMap f
@@ -170,11 +164,9 @@ allSat f
         = [sol]
       allSol (id : ids) sol
         | (id `elem` sol) || ((-id) `elem` sol) = allSol ids sol
-        | otherwise = (map (id :) (allSol ids sol)) ++ (map ((-id) :) (allSol ids sol))
-      sat :: [Int] -> [(Id, Bool)]
-      sat sol
-        = sort $ map (sat' idm) sol
-      sat' :: IdMap -> Int -> (Id, Bool)
-      sat' idm num
+        | otherwise = (map (  id  :) (allSol ids sol)) 
+                   ++ (map ((-id) :) (allSol ids sol))
+      sat :: IdMap -> Int -> (Id, Bool)
+      sat idm num
         | num >= 0 = (reverseLookUp num idm, True)
         | otherwise = (reverseLookUp (-num) idm, False)
