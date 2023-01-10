@@ -117,14 +117,36 @@ flatten f
 -- Part III
 
 -- 5 marks
+isSingleton :: [a] -> Bool
+isSingleton [_] = True
+isSingleton _   = False
+
 propUnits :: CNFRep -> (CNFRep, [Int])
-propUnits 
-  = undefined
+propUnits cnfrep
+  | null units = (cnfrep, [])
+  | otherwise = (cnfrep'', unit ++ us)
+    where
+      units = filter isSingleton cnfrep
+      unit = head units
+      cnfrep' = mapMaybe (prop unit) cnfrep
+      (cnfrep'', us) = propUnits cnfrep'
+      prop :: [Int] -> [Int] -> Maybe [Int]
+      prop unit cnfrep
+        | unit == cnfrep = Nothing
+        | (head unit) `elem` cnfrep = Nothing
+        | otherwise = Just (filter (/=(-(head unit))) cnfrep)
 
 -- 4 marks
 dp :: CNFRep -> [[Int]]
-dp 
-  = undefined
+dp cnfrep
+  | null cnfrep' = [units]
+  | any null cnfrep' = []
+  | otherwise = (map (++ units) (dp cnfrep1)) ++ (map (++ units) (dp cnfrep2))
+    where
+      (cnfrep', units) = propUnits cnfrep
+      (xxs@(x : xs) : xxs') = cnfrep'
+      cnfrep1 = [x] : xxs : xxs'
+      cnfrep2 = [-x] : xxs : xxs'
 
 --------------------------------------------------------------------------
 -- Part IV
