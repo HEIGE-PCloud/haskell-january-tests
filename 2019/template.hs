@@ -29,10 +29,6 @@ lookUp x xys
   = fromJust (lookup x xys)
 
 -- 3 marks
--- data Formula = Var Id
---              | Not Formula
---              | And Formula Formula
---              | Or  Formula Formula
 vars :: Formula -> [Id]
 vars (Var id)
   = [id]
@@ -64,18 +60,58 @@ distribute a b
 
 -- 4 marks
 toNNF :: Formula -> NNF
-toNNF 
-  = undefined
+toNNF f@(Var _)
+  = f
+toNNF (Not (And f1 f2))
+  = Or (toNNF (Not f1)) (toNNF (Not f2))
+toNNF (Not (Or f1 f2))
+  = And (toNNF (Not f1)) (toNNF (Not f2))
+toNNF (Not (Not f))
+  = toNNF f
+toNNF f@(Not (Var _))
+  = f
+toNNF (And f1 f2)
+  = And (toNNF f1) (toNNF f2)
+toNNF (Or f1 f2)
+  = Or (toNNF f1) (toNNF f2)
 
 -- 3 marks
 toCNF :: Formula -> CNF
-toCNF 
-  = undefined
+toCNF
+  = toCNF' . toNNF
+  where
+    toCNF' :: Formula -> CNF
+    toCNF' f@(Var _)
+      = f
+    toCNF' (Not f)
+      = Not (toCNF' f)
+    toCNF' (And f1 f2)
+      = And (toCNF' f1) (toCNF' f2)
+    toCNF' (Or f1 f2)
+      = distribute (toCNF' f1) (toCNF' f2)
 
 -- 4 marks
+-- (!b & (!a | c))
+-- (!b & (!a | c))
+-- data Formula = Var Id
+--              | Not Formula
+--              | And Formula Formula
+--              | Or  Formula Formula
+-- type CNFRep = [[Int]]
+-- [[1,2,3], [-1,4,5]]
 flatten :: CNF -> CNFRep
-flatten 
-  = undefined
+flatten f
+  = flatten' f (idMap f)
+  where
+    flatten' :: CNF -> IdMap -> CNFRep
+    flatten' (Var id) idm
+      = [[lookUp id idm]]
+    flatten' (Not (Var id)) idm
+      = [[-(lookUp id idm)]]
+    flatten' (And f1 f2) idm
+      = (flatten' f1 idm) ++ (flatten' f2 idm)
+    flatten' (Or f1 f2) idm
+      = [concat ((flatten' f1 idm) ++ (flatten' f2 idm))]
 
 --------------------------------------------------------------------------
 -- Part III
